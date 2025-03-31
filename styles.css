@@ -1,0 +1,21 @@
+/* CSS rules for F1TV Spoiler Blocker */
+
+/* Example: Hide elements completely */
+.spoiler-hidden {
+  display: none !important; /* Use !important judiciously */
+  visibility: hidden !important;
+}
+
+/* Example: Blur elements */
+.spoiler-blurred {
+  filter: blur(10px) !important;
+  transition: filter 0.3s ease;
+}
+
+/* Example: Style for hidden results text */
+.spoiler-result-hidden {
+  font-style: italic;
+  color: grey !important;
+}
+
+/* Add more specific rules based on F1TV's structure */ 

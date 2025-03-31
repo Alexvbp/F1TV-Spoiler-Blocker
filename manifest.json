@@ -2,43 +2,35 @@
   "manifest_version": 3,
   "name": "F1TV Spoiler Blocker",
   "version": "0.1.0",
-  "description": "Blocks potential spoilers on F1TV VOD pages.",
+  "description": "Hides spoilers on F1TV website VODs.",
   "permissions": [
-    "storage",
     "activeTab",
     "scripting"
   ],
-  "host_permissions": [
-    "*://f1tv.formula1.com/*"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
   "content_scripts": [
     {
-      "matches": ["*://f1tv.formula1.com/*"],
-      "js": ["content.js"],
-      "css": ["styles.css"],
+      "matches": [
+        "*://f1tv.formula1.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
-  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "f1tv-spoiler-blocker@example.com",
-      "strict_min_version": "109.0"
-    }
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    },
+    "default_title": "F1TV Spoiler Blocker"
   }
-}
+} 
