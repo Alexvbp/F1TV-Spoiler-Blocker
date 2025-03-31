@@ -18,4 +18,72 @@
   color: grey !important;
 }
 
+/* Option: Completely hide elements */
+/* Option: Hide elements - Replaced with Placeholder approach */
+/*.spoiler-hidden {
+  display: none !important; 
+}*/
+
+/* Option: Apply grayscale filter */
+.spoiler-grayscale {
+  filter: grayscale(100%) !important;
+}
+
+/* Option: Placeholder for replacing image source (JS will handle src replacement) */
+.spoiler-replace {
+  /* Style can be added if needed, e.g., to indicate replacement */
+  border: 1px dashed grey; 
+}
+
+/* Option: Blackout (applied to the wrapper perhaps, or use pseudo-elements) */
+/* We might need to adjust selectors in JS to target a wrapper for this */
+.spoiler-blackout-container::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+ background-color: black;
+ z-index: 10; /* Ensure it covers the image */
+}
+.spoiler-blackout-container {
+  position: relative; /* Needed for absolute positioning of ::before */
+  background-color: black; /* Fallback */
+}
+.spoiler-blackout-image {
+  opacity: 0 !important; /* Hide the original image underneath */
+  filter: none !important; /* Remove other filters if blackout is chosen */
+}
+
+/* Option: Placeholder for Hidden Images */
+.spoiler-hidden-container {
+  display: block; /* Ensure it takes up space */
+  position: relative; /* For pseudo-element positioning */
+  background-color: #e0e0e0; /* Light gray background */
+  min-height: 100px; /* Example minimum height - adjust as needed */
+  aspect-ratio: 16 / 9; /* Maintain aspect ratio */
+  width: 100%; /* Take up container width */
+  overflow: hidden; /* Hide anything overflowing */
+  border-radius: 4px; /* Optional rounding */
+}
+
+.spoiler-hidden-container::before {
+  content: "Spoiler Hidden";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #555;
+  font-size: 0.9em;
+  text-align: center;
+  z-index: 1; /* Above background */
+}
+
+.spoiler-hidden-image {
+  opacity: 0 !important; /* Make the actual image invisible */
+  visibility: hidden !important;
+  filter: none !important; /* Ensure other filters don't apply */
+}
+
 /* Add more specific rules based on F1TV's structure */ 

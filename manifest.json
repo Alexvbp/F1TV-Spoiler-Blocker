@@ -5,7 +5,8 @@
   "description": "Hides spoilers on F1TV website VODs.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "content_scripts": [
     {
@@ -31,6 +32,13 @@
       "16": "icons/icon16.png",
       "48": "icons/icon48.png"
     },
-    "default_title": "F1TV Spoiler Blocker"
+    "default_title": "F1TV Spoiler Blocker",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "f1tv-spoiler-blocker@example.com",
+      "strict_min_version": "109.0"
+    }
   }
 } 
