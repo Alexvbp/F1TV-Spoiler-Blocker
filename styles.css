@@ -94,4 +94,45 @@
   /* Add transition if desired */
 }
 
-/* Add more specific rules based on F1TV's structure */ 
+/* Add more specific rules based on F1TV's structure */
+
+/* Default hidden state for containers - applied immediately by CSS */
+a.video-card-item span.item-image-container,
+a.bundle-card-item span.item-image-container {
+  background-color: var(--spoiler-placeholder-bg, #a0a0a0); /* Darker placeholder */
+  overflow: hidden; /* Ensure image doesn't peek out */
+  display: inline-block; /* Or block, depending on layout */
+  position: relative; /* Needed for absolute positioning of img if any */
+}
+
+/* Hide the image itself within the default hidden container */
+a.video-card-item span.item-image-container img,
+a.bundle-card-item span.item-image-container img {
+   visibility: hidden; /* Hide image content */
+}
+
+/* Styles applied by JS */
+.spoiler-hidden-container {
+  /* ... existing code ... */
+}
+
+/* --- Overrides applied by JS once initialized --- */
+
+/* When initialized, remove the default background and make image potentially visible */
+a.video-card-item span.item-image-container.spoiler-block-initialized,
+a.bundle-card-item span.item-image-container.spoiler-block-initialized {
+  background-color: transparent !important; /* Override default placeholder */
+}
+
+/* Make the image visible again (blur/hide will be applied by other JS rules if needed) */
+a.video-card-item span.item-image-container.spoiler-block-initialized img,
+a.bundle-card-item span.item-image-container.spoiler-block-initialized img {
+  visibility: visible !important; /* Override default hidden visibility */
+}
+
+/* --- Styles applied by JS for specific methods --- */
+
+/* Option: Placeholder for Hidden Images (applied by JS) */
+.spoiler-hidden-container {
+  /* ... existing code ... */
+} 

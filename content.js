@@ -16,15 +16,21 @@ const gpBannerSelector = 'div.gp-banner-main-container img.gp-banner-image'; // 
 // CSS classes corresponding to methods
 const methodClasses = {
   // blurred: 'spoiler-blurred', // No longer using class for blur
-  hidden: 'spoiler-hidden-image',
+  hidden: 'spoiler-hidden-image', // Class for the img tag when using placeholder
   // grayscale: 'spoiler-grayscale' // Removed
   // blackout: 'spoiler-blackout-image', // Needs container logic too
   // replace: 'spoiler-replace' // Needs src replacement logic
 };
 // Special class for the container when hiding
-const hiddenContainerClass = 'spoiler-hidden-container';
+const hiddenContainerClass = 'spoiler-hidden-container'; // Class for the container span
 // Special class for the banner image
 const bannerBlurredClass = 'spoiler-banner-image-blurred';
+
+// Class to mark elements processed by this script, overriding default CSS hide
+const initializedClass = 'spoiler-block-initialized';
+
+// Debounce timer variable
+let debounceTimer = null;
 
 function applySpoilers() {
   console.log(`Applying method: ${currentBlockingMethod}, VODs: ${shouldBlockVods}, GPs: ${shouldBlockGps}`);
@@ -34,6 +40,8 @@ function applySpoilers() {
 
   // Helper function to apply the class or style
   const applyClass = (selector, typeName, applyToContainer = false, containerSelector = 'span.item-image-container') => {
+    console.log(`[SpoilerBlock] applyClass called for selector: "${selector}", type: ${typeName}, method: ${currentBlockingMethod}`);
+    let elementsFoundThisCall = 0; // Counter for this specific call
     try {
       const elements = document.querySelectorAll(selector);
       elements.forEach(el => {
@@ -49,35 +57,59 @@ function applySpoilers() {
         targetElement.style.filter = ''; // Clear inline blur filter
         if (containerElement) {
            containerElement.classList.remove(hiddenContainerClass);
+           containerElement.classList.add(initializedClass); // Mark as processed
         }
         // Also remove banner blur class specifically
         if(selector === gpBannerSelector) targetElement.classList.remove(bannerBlurredClass);
-
 
         // Apply selected method
         if (currentBlockingMethod === 'hidden' && applyToContainer) {
              if (containerElement) {
                 containerElement.classList.add(hiddenContainerClass);
                 targetElement.classList.add(methodClasses.hidden); // Apply hidden class to image within container
-                elementsFound++;
+                elementsFoundThisCall++;
              } else {
                  console.warn(`Could not find container for hidden element: ${typeName}`, el);
              }
         } else if (selector === gpBannerSelector) { // Specific handling for GP Banner image blur
              if (!targetElement.classList.contains(bannerBlurredClass)) {
                  targetElement.classList.add(bannerBlurredClass);
-                 elementsFound++;
+                 elementsFoundThisCall++;
              }
         } else {
              // Apply blur method using inline style
              if (currentBlockingMethod === 'blurred') {
                  targetElement.style.filter = `blur(${currentBlurAmount}px)`;
-                 elementsFound++;
+                 elementsFoundThisCall++;
+                 // Also mark VOD/GP container as initialized if not already done (redundancy is ok)
+                 if (!applyToContainer) { // Only if we didn't already find container above
+                    let blurContainer = el.closest('span.item-image-container');
+                    if(blurContainer) blurContainer.classList.add(initializedClass);
+                 }
              } else {
                  // Apply other methods (none currently besides hidden)
              }
         }
+
+        // Increment count if we successfully added the initialized class (meaning we processed it)
+        if ((containerElement && containerElement.classList.contains(initializedClass)) || 
+            (selector === gpBannerSelector && targetElement.classList.contains(bannerBlurredClass)) || // Banner case
+            (currentBlockingMethod === 'blurred' && targetElement.style.filter) ) { // Blur case
+             elementsFoundThisCall++;
+        }
       });
+
+      // Log summary after processing all elements for this selector
+      if (elementsFoundThisCall > 0) {
+          if (currentBlockingMethod === 'hidden' && applyToContainer) {
+              console.log(`[SpoilerBlock] Applied 'hidden' to ${elementsFoundThisCall} containers for selector: "${selector}"`);
+          } else if (currentBlockingMethod === 'blurred') {
+              console.log(`[SpoilerBlock] Applied 'blur(${currentBlurAmount}px)' to ${elementsFoundThisCall} elements for selector: "${selector}"`);
+          } else if (selector === gpBannerSelector && currentBlockingMethod !== 'hidden') { // Banner blur uses class currently
+              console.log(`[SpoilerBlock] Applied banner class to ${elementsFoundThisCall} elements for selector: "${selector}"`);
+          }
+      }
+
     } catch (error) {
       console.error(`Error applying selector "${selector}":`, error);
     }
@@ -92,16 +124,25 @@ function applySpoilers() {
         Object.values(methodClasses).forEach(cls => el.classList.remove(cls));
         el.style.filter = ''; // Clear inline blur filter
         
-        // Also remove the container class if it exists and method was hidden
+        // Find container and remove initialized/hidden classes
+        let containerElement = null;
         if (isContainerBased) {
-            const container = el.closest(containerSelector);
-            if (container) {
-                container.classList.remove(hiddenContainerClass);
-            }
+             containerElement = el.closest(containerSelector);
+             if (containerElement) {
+                 containerElement.classList.remove(hiddenContainerClass);
+                 containerElement.classList.remove(initializedClass); // Remove initialized class
+             }
         }
-        // Remove banner class specifically
-        if (selector === gpBannerSelector) el.classList.remove(bannerBlurredClass);
 
+        // Remove classes from the image itself
+        el.classList.remove(methodClasses.hidden);
+
+        // Special handling for GP banner
+        if (selector === gpBannerSelector) {
+            el.classList.remove(bannerBlurredClass);
+            const bannerContainer = el.closest('div.gp-banner-main-container'); // Adjust if selector changes
+            if(bannerContainer) bannerContainer.classList.remove(initializedClass);
+        }
       });
     } catch (error) {
        console.error(`Error clearing selector "${selector}":`, error);
@@ -122,17 +163,14 @@ function applySpoilers() {
     clearClass(gpImageSelector, true);
     clearClass(gpBannerSelector);
   }
-
-  if (elementsFound > 0) {
-    console.log(`Applied ${blockingClass} to ${elementsFound} new images.`);
-  }
 }
 
 // Function to load settings and then apply spoilers
 function loadSettingsAndApply() {
   chrome.storage.sync.get(['blockingMethod', 'blockVods', 'blockGps', 'blurAmount'], function(items) {
+    console.log('[SpoilerBlock] loadSettingsAndApply: Retrieved settings on load/update:', items);
     if (chrome.runtime.lastError) {
-        console.error("Error retrieving settings:", chrome.runtime.lastError);
+        console.error("[SpoilerBlock] Error retrieving settings:", chrome.runtime.lastError);
         // Proceed with defaults if loading fails
     } else {
         currentBlockingMethod = items.blockingMethod || 'blurred';
@@ -140,16 +178,26 @@ function loadSettingsAndApply() {
         shouldBlockGps = items.blockGps !== undefined ? items.blockGps : true;
         currentBlurAmount = items.blurAmount || 15; // Load blur amount
     }
+    console.log(`[SpoilerBlock] loadSettingsAndApply: Applying with method='${currentBlockingMethod}', blur=${currentBlurAmount}px, blockVods=${shouldBlockVods}, blockGps=${shouldBlockGps}`);
     applySpoilers(); // Apply based on loaded (or default) settings
   });
 }
 
 // Initial load
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadSettingsAndApply);
-} else {
-  loadSettingsAndApply();
-}
+console.log("[SpoilerBlock] Content script initializing... Loading initial settings.");
+// Just load settings initially, don't apply yet. Observer will trigger first application.
+chrome.storage.sync.get(['blockingMethod', 'blockVods', 'blockGps', 'blurAmount'], function(items) {
+    if (chrome.runtime.lastError) {
+        console.error("[SpoilerBlock] Initial settings load failed:", chrome.runtime.lastError);
+        // Defaults are set globally, so we can proceed
+    } else {
+        console.log('[SpoilerBlock] Initial settings loaded:', items);
+        currentBlockingMethod = items.blockingMethod || 'blurred';
+        shouldBlockVods = items.blockVods !== undefined ? items.blockVods : true;
+        shouldBlockGps = items.blockGps !== undefined ? items.blockGps : true;
+        currentBlurAmount = items.blurAmount || 15;
+    }
+});
 
 // Update via MutationObserver
 const observer = new MutationObserver((mutationsList) => {
@@ -163,8 +211,13 @@ const observer = new MutationObserver((mutationsList) => {
     }
   }
   if (needsUpdate) {
-       // Debounce could be added here if applySpoilers gets called too often
-       applySpoilers(); 
+       // Clear the existing timer if it exists
+       clearTimeout(debounceTimer);
+       // Set a new timer to run applySpoilers after a short delay
+       debounceTimer = setTimeout(() => {
+           console.log("[SpoilerBlock] Debounced MutationObserver triggering applySpoilers...");
+           applySpoilers(); 
+       }, 200); // Wait 200 milliseconds after the last detected change
   }
 });
 
