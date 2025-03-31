@@ -6,21 +6,25 @@ console.log("F1TV Spoiler Blocker content script loaded.");
 let currentBlockingMethod = 'blurred'; // Default
 let shouldBlockVods = true; // Default
 let shouldBlockGps = true; // Default
+let currentBlurAmount = 15; // Default
 
 // Selectors
 const vodImageSelector = 'a.video-card-item span.item-image-container img';
 const gpImageSelector = 'a.bundle-card-item span.item-image-container img';
+const gpBannerSelector = 'div.gp-banner-main-container img.gp-banner-image'; // Target the image inside banner
 
 // CSS classes corresponding to methods
 const methodClasses = {
-  blurred: 'spoiler-blurred',
-  hidden: 'spoiler-hidden-image', // Apply this to the image itself
-  grayscale: 'spoiler-grayscale'
+  // blurred: 'spoiler-blurred', // No longer using class for blur
+  hidden: 'spoiler-hidden-image',
+  // grayscale: 'spoiler-grayscale' // Removed
   // blackout: 'spoiler-blackout-image', // Needs container logic too
   // replace: 'spoiler-replace' // Needs src replacement logic
 };
 // Special class for the container when hiding
 const hiddenContainerClass = 'spoiler-hidden-container';
+// Special class for the banner image
+const bannerBlurredClass = 'spoiler-banner-image-blurred';
 
 function applySpoilers() {
   console.log(`Applying method: ${currentBlockingMethod}, VODs: ${shouldBlockVods}, GPs: ${shouldBlockGps}`);
@@ -28,35 +32,49 @@ function applySpoilers() {
 
   let elementsFound = 0;
 
-  // Helper function to apply the class
-  const applyClass = (selector, typeName) => {
+  // Helper function to apply the class or style
+  const applyClass = (selector, typeName, applyToContainer = false, containerSelector = 'span.item-image-container') => {
     try {
-      const images = document.querySelectorAll(selector);
-      images.forEach(img => {
-        const container = img.closest('span.item-image-container'); // Find the container
-        
-        // Remove other potential spoiler classes first
-        Object.values(methodClasses).forEach(cls => img.classList.remove(cls));
-        if (container) {
-           container.classList.remove(hiddenContainerClass);
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(el => {
+        let targetElement = el; // Element to apply standard blur/grayscale to
+        let containerElement = null;
+
+        if (applyToContainer) {
+            containerElement = el.closest(containerSelector); // Find the container for hiding
         }
+        
+        // Remove other potential spoiler classes/styles first
+        Object.values(methodClasses).forEach(cls => targetElement.classList.remove(cls));
+        targetElement.style.filter = ''; // Clear inline blur filter
+        if (containerElement) {
+           containerElement.classList.remove(hiddenContainerClass);
+        }
+        // Also remove banner blur class specifically
+        if(selector === gpBannerSelector) targetElement.classList.remove(bannerBlurredClass);
+
 
         // Apply selected method
-        if (currentBlockingMethod === 'hidden') {
-             if (container) {
-                container.classList.add(hiddenContainerClass);
+        if (currentBlockingMethod === 'hidden' && applyToContainer) {
+             if (containerElement) {
+                containerElement.classList.add(hiddenContainerClass);
+                targetElement.classList.add(methodClasses.hidden); // Apply hidden class to image within container
+                elementsFound++;
              } else {
-                 console.warn('Could not find container for hidden image:', img);
+                 console.warn(`Could not find container for hidden element: ${typeName}`, el);
              }
-             img.classList.add(methodClasses.hidden); // Apply hidden class to image
-             elementsFound++;
-        } else {
-             // Apply other methods directly to the image
-             const blockingClass = methodClasses[currentBlockingMethod] || methodClasses.blurred;
-             if (!img.classList.contains(blockingClass)) {
-                 img.classList.add(blockingClass);
+        } else if (selector === gpBannerSelector) { // Specific handling for GP Banner image blur
+             if (!targetElement.classList.contains(bannerBlurredClass)) {
+                 targetElement.classList.add(bannerBlurredClass);
                  elementsFound++;
-                // console.log(`Applied ${blockingClass} to ${typeName} image:`, img);
+             }
+        } else {
+             // Apply blur method using inline style
+             if (currentBlockingMethod === 'blurred') {
+                 targetElement.style.filter = `blur(${currentBlurAmount}px)`;
+                 elementsFound++;
+             } else {
+                 // Apply other methods (none currently besides hidden)
              }
         }
       });
@@ -66,16 +84,24 @@ function applySpoilers() {
   };
 
   // Clear existing styles if elements shouldn't be blocked anymore
-  const clearClass = (selector) => {
+  const clearClass = (selector, isContainerBased = false, containerSelector = 'span.item-image-container') => {
      try {
-      const images = document.querySelectorAll(selector);
-      images.forEach(img => {
-        Object.values(methodClasses).forEach(cls => img.classList.remove(cls));
-        // Also remove the container class if it exists
-        const container = img.closest('span.item-image-container');
-        if (container) {
-          container.classList.remove(hiddenContainerClass);
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(el => {
+        // Remove standard method classes
+        Object.values(methodClasses).forEach(cls => el.classList.remove(cls));
+        el.style.filter = ''; // Clear inline blur filter
+        
+        // Also remove the container class if it exists and method was hidden
+        if (isContainerBased) {
+            const container = el.closest(containerSelector);
+            if (container) {
+                container.classList.remove(hiddenContainerClass);
+            }
         }
+        // Remove banner class specifically
+        if (selector === gpBannerSelector) el.classList.remove(bannerBlurredClass);
+
       });
     } catch (error) {
        console.error(`Error clearing selector "${selector}":`, error);
@@ -84,15 +110,17 @@ function applySpoilers() {
 
   // Apply based on settings
   if (shouldBlockVods) {
-    applyClass(vodImageSelector, 'VOD');
+    applyClass(vodImageSelector, 'VOD', true); // Third arg true = applyToContainer for hidden
   } else {
-    clearClass(vodImageSelector); // Remove styles if disabled
+    clearClass(vodImageSelector, true); // Third arg true = isContainerBased for clearing
   }
 
   if (shouldBlockGps) {
-    applyClass(gpImageSelector, 'GP');
+    applyClass(gpImageSelector, 'GP', true); // ApplyToContainer for hidden
+    applyClass(gpBannerSelector, 'GP Banner Image'); // Apply directly (blur) to banner image
   } else {
-    clearClass(gpImageSelector); // Remove styles if disabled
+    clearClass(gpImageSelector, true);
+    clearClass(gpBannerSelector);
   }
 
   if (elementsFound > 0) {
@@ -102,7 +130,7 @@ function applySpoilers() {
 
 // Function to load settings and then apply spoilers
 function loadSettingsAndApply() {
-  chrome.storage.sync.get(['blockingMethod', 'blockVods', 'blockGps'], function(items) {
+  chrome.storage.sync.get(['blockingMethod', 'blockVods', 'blockGps', 'blurAmount'], function(items) {
     if (chrome.runtime.lastError) {
         console.error("Error retrieving settings:", chrome.runtime.lastError);
         // Proceed with defaults if loading fails
@@ -110,6 +138,7 @@ function loadSettingsAndApply() {
         currentBlockingMethod = items.blockingMethod || 'blurred';
         shouldBlockVods = items.blockVods !== undefined ? items.blockVods : true;
         shouldBlockGps = items.blockGps !== undefined ? items.blockGps : true;
+        currentBlurAmount = items.blurAmount || 15; // Load blur amount
     }
     applySpoilers(); // Apply based on loaded (or default) settings
   });

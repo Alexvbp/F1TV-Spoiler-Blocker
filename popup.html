@@ -1,38 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>F1TV Spoiler Blocker Settings</title>
+  <title>F1TV SpoilerBlock</title>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
       padding: 15px; 
       width: 280px; 
-      background-color: #f4f4f4;
-      color: #333;
+      /* Define CSS variables for colors */
+      --bg-color: #f4f4f4;
+      --text-color: #333;
+      --fieldset-bg: #fff;
+      --legend-bg: #eee;
+      --legend-text: #555;
+      --border-color: #ddd;
+      --f1-red: #e10600;
+      --button-text: #fff;
+      --switch-bg-inactive: #ccc;
+      --switch-handle: #fff;
+      --status-text-success: green;
+      --status-text-error: red;
+
+      background-color: var(--bg-color);
+      color: var(--text-color);
     }
+
+    /* Dark mode styles */
+    @media (prefers-color-scheme: dark) {
+      body {
+        --bg-color: #2e2e2e; /* Darker background */
+        --text-color: #e0e0e0; /* Lighter text */
+        --fieldset-bg: #3a3a3a; /* Darker fieldset */
+        --legend-bg: #4a4a4a; /* Darker legend */
+        --legend-text: #d0d0d0; /* Lighter legend text */
+        --border-color: #555; /* Darker border */
+        --switch-bg-inactive: #555;
+        --switch-handle: #ccc;
+        --status-text-success: #4caf50; /* Slightly adjusted green */
+        --status-text-error: #f44336; /* Slightly adjusted red */
+      }
+      /* Optional: Adjust slider track color in dark mode */
+      input[type="range"]::-webkit-slider-runnable-track {
+         background: #555;
+      }
+      input[type="range"]::-moz-range-track {
+         background: #555;
+      }
+    }
+
     h3 {
       margin-top: 0;
-      color: #e10600; /* F1 Red */
+      color: var(--f1-red);
       text-align: center;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid var(--border-color);
       padding-bottom: 5px;
     }
     fieldset { 
       border: none; 
       margin-bottom: 15px; 
       padding: 0; 
-      background-color: #fff;
+      background-color: var(--fieldset-bg);
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     legend { 
       font-weight: bold; 
       padding: 10px 15px;
-      background-color: #eee;
+      background-color: var(--legend-bg);
       width: 100%;
       box-sizing: border-box;
       border-radius: 5px 5px 0 0;
-      color: #555;
+      color: var(--legend-text);
       margin-bottom: 10px;
     }
     .fieldset-content {
@@ -66,7 +104,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #ccc;
+      background-color: var(--switch-bg-inactive);
       transition: .4s;
       border-radius: 20px;
     }
@@ -77,12 +115,12 @@
       width: 14px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
+      background-color: var(--switch-handle);
       transition: .4s;
       border-radius: 50%;
     }
     input:checked + .slider {
-      background-color: #e10600; /* F1 Red */
+      background-color: var(--f1-red);
     }
     input:checked + .slider:before {
       transform: translateX(20px);
@@ -91,8 +129,8 @@
     button { 
       margin-top: 10px; 
       padding: 8px 15px;
-      background-color: #e10600;
-      color: white;
+      background-color: var(--f1-red);
+      color: var(--button-text);
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -107,18 +145,22 @@
       margin-top: 10px; 
       font-size: 0.9em; 
       text-align: center;
-      color: green;
+      /* Color set dynamically by JS */
       min-height: 1.2em; /* Reserve space */
     }
   </style>
 </head>
 <body>
-  <h3>Spoiler Blocker Options</h3>
+  <h3>F1TV SpoilerBlock</h3>
 
   <fieldset>
     <legend>Blocking Method</legend>
     <div class="fieldset-content">
         <label><input type="radio" name="blockingMethod" value="blurred" checked> Blur Images</label>
+        <div id="blurOptions" style="padding-left: 25px; margin-bottom: 8px;">
+          <label for="blurAmount" style="font-size: 0.9em; margin-bottom: 3px;">Blur Intensity: <span id="blurValue">15</span>px</label>
+          <input type="range" id="blurAmount" name="blurAmount" min="5" max="50" value="15" style="width: 100%;">
+        </div>
         <label><input type="radio" name="blockingMethod" value="hidden"> Hide Images</label>
     </div>
   </fieldset>

@@ -8,7 +8,7 @@
 
 /* Example: Blur elements */
 .spoiler-blurred {
-  filter: blur(10px) !important;
+  filter: blur(15px) !important;
   transition: filter 0.3s ease;
 }
 
@@ -25,9 +25,11 @@
 }*/
 
 /* Option: Apply grayscale filter */
+/* Commented out as requested
 .spoiler-grayscale {
   filter: grayscale(100%) !important;
 }
+*/
 
 /* Option: Placeholder for replacing image source (JS will handle src replacement) */
 .spoiler-replace {
@@ -60,7 +62,7 @@
 .spoiler-hidden-container {
   display: block; /* Ensure it takes up space */
   position: relative; /* For pseudo-element positioning */
-  background-color: #e0e0e0; /* Light gray background */
+  background-color: #a0a0a0; /* Even darker gray background */
   min-height: 100px; /* Example minimum height - adjust as needed */
   aspect-ratio: 16 / 9; /* Maintain aspect ratio */
   width: 100%; /* Take up container width */
@@ -74,7 +76,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #555;
+  color: #666666; /* Darker text color */
   font-size: 0.9em;
   text-align: center;
   z-index: 1; /* Above background */
@@ -84,6 +86,12 @@
   opacity: 0 !important; /* Make the actual image invisible */
   visibility: hidden !important;
   filter: none !important; /* Ensure other filters don't apply */
+}
+
+/* Style for blurring the main GP banner image */
+.spoiler-banner-image-blurred {
+  filter: blur(15px) !important;
+  /* Add transition if desired */
 }
 
 /* Add more specific rules based on F1TV's structure */ 
