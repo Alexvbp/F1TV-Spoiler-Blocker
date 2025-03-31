@@ -1,4 +1,4 @@
-# F1TV SpoilerBlock
+# F1TV Spoiler Blocker
 
 A configurable browser extension for Chrome and Firefox designed to hide spoilers on the F1TV website. Browse VODs and race weekend pages without accidentally seeing results or revealing imagery.
 
