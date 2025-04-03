@@ -5,7 +5,6 @@
   "description": "Hides spoilers on F1TV website VODs.",
   "permissions": [
     "activeTab",
-    "scripting",
     "storage"
   ],
   "content_scripts": [
